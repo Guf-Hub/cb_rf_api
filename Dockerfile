@@ -18,7 +18,7 @@ COPY --from=poetry-base ${POETRY_VENV} ${POETRY_VENV}
 ENV PATH="${PATH}:${POETRY_VENV}/bin"
 
 WORKDIR /app
-COPY ../poetry.lock pyproject.toml ./
+COPY poetry.lock pyproject.toml ./
 COPY README.md .
 
 RUN poetry check
