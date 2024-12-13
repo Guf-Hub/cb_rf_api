@@ -23,7 +23,7 @@ https://github.com/luchanos/luchanos_oxford_university
 https://docs.docker.com/desktop/install/linux-install/
 
 ```bash
-docker-compose -f docker-compose-local.yaml up -d
+docker-compose -f docker-compose.yaml up -d
 ```
 
 ```bash
