@@ -32,4 +32,4 @@ RUN echo "Europe/Moscow" > /etc/timezone && \
     dpkg-reconfigure -f noninteractive tzdata
 
 #CMD ["poetry", "run", "python", "-m", "main"]
-CMD ["poetry", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80", "--workers", "5"]
+CMD ["poetry", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
