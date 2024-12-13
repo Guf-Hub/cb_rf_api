@@ -1,4 +1,6 @@
 import random
+import socket
+
 
 user_agents = {
     "chrome": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36",
@@ -11,3 +13,8 @@ user_agents = {
 
 def get_random_user_agent():
     return random.choice(list(user_agents.values()))
+
+
+def get_ip_address():
+    """Returns the IP address of the local computer"""
+    return socket.gethostbyname_ex(socket.gethostname())[2][0]
