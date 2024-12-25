@@ -196,7 +196,7 @@ async def fetch_currency_data(session, url, currency_json):
                         unit_rate=record.find("VunitRate").text,
                     ).to_dict()
                     for record in root.findall("Record")
-                    if currency_json[record.get("Id")] is not None
+                    if currency_json.get(record.get("Id")) is not None
                 ]
         except aiohttp.ClientConnectorError as e:
             print(f"Попытка {attempt + 1}: Не удалось установить соединение. {e}")
