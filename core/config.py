@@ -40,7 +40,7 @@ class UvicornConfig(DefaultConfig):
     PORT: int = 80  # 8000
     RELOAD: bool = False
     LOG_LEVEL: str = "info"
-    WORKERS: int = 1
+    WORKERS: int = 2
 
     DEV_HOST: str = "localhost"  # "0.0.0.0"
     DEV_RELOAD: bool = True  # False
