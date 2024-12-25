@@ -36,11 +36,15 @@ class AuthConfig(DefaultConfig):
 
 class UvicornConfig(DefaultConfig):
     APP: str = "main:app"
-    HOST: str = "localhost"  # "0.0.0.0"
+    HOST: str = "0.0.0.0"
     PORT: int = 80  # 8000
     RELOAD: bool = False
     LOG_LEVEL: str = "info"
     WORKERS: int = 5
+
+    DEV_HOST: str = "localhost"  # "0.0.0.0"
+    DEV_RELOAD: bool = True  # False
+    DEV_WORKERS: int = 1  # 5
 
     @property
     def uvicorn_kwargs(self) -> dict:
@@ -51,6 +55,17 @@ class UvicornConfig(DefaultConfig):
             "reload": self.RELOAD,
             "log_level": self.LOG_LEVEL,
             "workers": self.WORKERS,
+        }
+
+    @property
+    def uvicorn_dev_kwargs(self) -> dict:
+        return {
+            "app": self.APP,
+            "host": self.DEV_HOST,
+            "port": self.PORT,
+            "reload": self.DEV_RELOAD,
+            "log_level": self.LOG_LEVEL,
+            "workers": self.DEV_WORKERS,
         }
 
 

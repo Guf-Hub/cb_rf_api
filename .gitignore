@@ -161,3 +161,4 @@ cython_debug/
 
 /test
 /database/db.db
+!/cost_price.xlsx

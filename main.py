@@ -9,4 +9,10 @@ app.include_router(router=router_v1, prefix=settings.api_v1_prefix)
 
 
 if __name__ == "__main__":
-    uvicorn.run(**settings.uvicorn.uvicorn_kwargs)
+    uvicorn.run(
+        **(
+            settings.uvicorn.uvicorn_dev_kwargs
+            if settings.dev
+            else settings.uvicorn.uvicorn_kwargs
+        )
+    )
