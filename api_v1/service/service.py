@@ -162,7 +162,6 @@ async def exchange_rates_dynamics(date_from=None, date_to=None, cb_code_codes=No
         results = await asyncio.gather(*tasks)
         for result in results:
             currency.extend(result)
-        print(f"Всего валют: {currency}")
 
     return currency
 

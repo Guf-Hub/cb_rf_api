@@ -179,8 +179,6 @@ async def get_exchange_rates_dynamics(
         request.cb_codes if request else None,
     )
 
-    print(result)
-
     if not result:
         raise HTTPException(
             status_code=status.HTTP_204_NO_CONTENT,
