@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from datetime import datetime
-
+import pytz
 
 import aiohttp
 import requests
@@ -12,6 +12,9 @@ from api_v1.db.models.models import ExchangeRate
 from api_v1.service.models.models import CurrencyCodeModel, ExchangeRateModel
 
 from utils.utils import get_random_user_agent
+
+timezone = "Europe/Moscow"
+tz = pytz.timezone(timezone)
 
 
 async def currency_codes(json_list: bool = False) -> list | dict:
@@ -59,7 +62,7 @@ async def currency_codes(json_list: bool = False) -> list | dict:
                                         nominal=int(nominal) if nominal else None,
                                     ).to_dict()
                                 )
-
+                        break
         except aiohttp.ClientConnectorError as e:
             print(f"Попытка {attempt + 1}: Не удалось установить соединение. {e}")
             await asyncio.sleep(2)  # Задержка перед повторной попыткой
@@ -68,7 +71,7 @@ async def currency_codes(json_list: bool = False) -> list | dict:
     return currency
 
 
-async def exchange_rates_daly(date: str = None):
+async def exchange_rates_daly(date: str = None, currency_iso_code: str = None) -> list:
     url = (
         f"http://www.cbr.ru/scripts/XML_daily.asp?date_req={datetime.fromisoformat(date).strftime("%d/%m/%Y")}"
         if date
@@ -103,22 +106,27 @@ async def exchange_rates_daly(date: str = None):
                             value = record.find("Value").text
                             unit_rate = record.find("VunitRate").text
 
-                            currency.append(
-                                ExchangeRateModel(
-                                    date=date,
-                                    cb_code=cb_code,
-                                    iso_id=int(iso_id) if iso_id else None,
-                                    iso_code=iso_code,
-                                    name_ru=name_ru,
-                                    nominal=int(nominal) if nominal else None,
-                                    value=value,  # float(value.replace(',', '.')) if value else 0,
-                                    unit_rate=unit_rate,  # float(unit_rate.replace(',', '.')) if unit_rate else 0,
-                                ).to_dict()
-                            )
+                            currency_ = ExchangeRateModel(
+                                date=date,
+                                cb_code=cb_code,
+                                iso_id=int(iso_id) if iso_id else None,
+                                iso_code=iso_code,
+                                name_ru=name_ru,
+                                nominal=int(nominal) if nominal else None,
+                                value=value,  # float(value.replace(',', '.')) if value else 0,
+                                unit_rate=unit_rate,  # float(unit_rate.replace(',', '.')) if unit_rate else 0,
+                            ).to_dict()
+
+                            currency.append(currency_)
+                        break
 
         except aiohttp.ClientConnectorError as e:
             print(f"Попытка {attempt + 1}: Не удалось установить соединение. {e}")
             await asyncio.sleep(2)  # Задержка перед повторной попыткой
+
+    if currency_iso_code:
+        currency = [c for c in currency if c["iso_code"] == currency_iso_code]
+
     return currency
 
 
@@ -135,7 +143,7 @@ async def exchange_rates_dynamics(date_from=None, date_to=None, cb_code_codes=No
     end_date = (
         datetime.fromisoformat(date_to).strftime("%d/%m/%Y")
         if date_to
-        else datetime.now().strftime("%d/%m/%Y")
+        else datetime.now(tz=tz).strftime("%d/%m/%Y")
     )
 
     # Если коды валют не переданы, извлекаем их из currency_json
@@ -154,6 +162,7 @@ async def exchange_rates_dynamics(date_from=None, date_to=None, cb_code_codes=No
         results = await asyncio.gather(*tasks)
         for result in results:
             currency.extend(result)
+        print(f"Всего валют: {currency}")
 
     return currency
 
@@ -165,6 +174,7 @@ async def fetch_currency_data(session, url, currency_json):
             async with session.get(
                 url, headers={"User-Agent": get_random_user_agent()}
             ) as response:
+
                 if response.status != 200:
                     return []
 

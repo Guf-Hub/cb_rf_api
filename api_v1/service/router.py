@@ -1,5 +1,6 @@
+from typing import Annotated, Union
 from datetime import datetime
-from typing import Annotated, Union, List, Dict
+import pytz
 
 from fastapi import (
     APIRouter,
@@ -19,6 +20,9 @@ from .models.models import (
 from .service import currency_codes, exchange_rates_daly, exchange_rates_dynamics
 
 router = APIRouter()
+
+timezone = "Europe/Moscow"
+tz = pytz.timezone(timezone)
 
 
 @router.get(
@@ -65,16 +69,25 @@ async def get_exchange_rates_daly(
             pattern="^\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}:\\d{2}Z)?",
         ),
     ] = None,
+    currency_iso_code: Annotated[
+        Union[str, None],
+        Query(
+            alias="currency_iso_code",
+            title="string",
+            examples=["USD"],
+            description="ISO код валюты",
+        ),
+    ] = None,
 ):
 
     if date:
-        if datetime.strptime(date, "%Y-%m-%d").date() > datetime.now().date():
+        if datetime.strptime(date, "%Y-%m-%d").date() > datetime.now(tz=tz).date():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="date > current date",
             )
 
-    result = await exchange_rates_daly(date)
+    result = await exchange_rates_daly(date, currency_iso_code)
 
     if not result:
         raise HTTPException(
@@ -144,7 +157,7 @@ async def get_exchange_rates_dynamics(
 ):
 
     if date_from and not date_to:
-        if datetime.strptime(date_from, "%Y-%m-%d").date() > datetime.now().date():
+        if datetime.strptime(date_from, "%Y-%m-%d").date() > datetime.now(tz=tz).date():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="date_from > current date",
@@ -165,6 +178,8 @@ async def get_exchange_rates_dynamics(
         date_to,
         request.cb_codes if request else None,
     )
+
+    print(result)
 
     if not result:
         raise HTTPException(
