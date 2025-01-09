@@ -1,10 +1,42 @@
 import uvicorn
+from fastapi import FastAPI
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.cors import CORSMiddleware
+
 from api_v1 import router as router_v1
-
-from core.create_fasapi_app import create_app
 from core.config import settings
+from core.create_fasapi_app import create_app
 
-app = create_app(create_custom_static_urls=False)
+
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+
+    # Установка безопасных заголовков
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    # response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' https://apis.example.com; style-src 'self' 'unsafe-inline';"
+
+    return response
+
+
+app: FastAPI = create_app(create_custom_static_urls=True)
+# Добавляем middleware с безопасными заголовками
+app.add_middleware(BaseHTTPMiddleware, dispatch=add_security_headers)
+
+# Добавляем CORS middleware, если нужно
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "GET",
+        "POST",
+        # "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS",
+    ],  # Укажите, какие домены могут делать запросы (безопаснее указать конкретные)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(router=router_v1, prefix=settings.api_v1_prefix)
 
 
@@ -16,3 +48,6 @@ if __name__ == "__main__":
             else settings.uvicorn.uvicorn_kwargs
         )
     )
+
+    # https://habr.com/ru/articles/714570/
+    # https://ya.zerocoder.ru/pgt-fastapi-realizaciya-paginacii-i-sortirovki-v-veb-sloe/

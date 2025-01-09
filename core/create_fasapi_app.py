@@ -67,7 +67,7 @@ def create_app(create_custom_static_urls: bool = False) -> FastAPI:
         },
         openapi_tags=tags_metadata,
         docs_url=None if create_custom_static_urls else "/",  # "/docs",
-        redoc_url=None if create_custom_static_urls else "/",  # "/redoc",
+        # redoc_url=None if create_custom_static_urls else "/",  # "/redoc",
     )
 
     if create_custom_static_urls:

@@ -373,3 +373,9 @@ celery -A tasks worker -c 4 -n trendy --loglevel=INFO -P gevent
 - git help — показать справочную информацию о Git. (https://t.me/python2day)
 
 .gitignore — объясняем Git, какие файлы следует игнорировать.
+
+# 🚀 Запуск приложения
+
+```bash
+gunicorn -w 4 -k uvicorn.workers.UvicornWorker main:app
+```
