@@ -111,7 +111,7 @@ class DBSettings(DefaultConfig):
 
 
 class Settings(BaseSettings):
-    dev: bool = True
+    dev: bool = False
     api: bool = False
     use_sqlite: bool = True
     api_v1_prefix: str = "/api/v1"
