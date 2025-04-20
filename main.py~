@@ -20,7 +20,7 @@ async def add_security_headers(request, call_next):
     return response
 
 
-app: FastAPI = create_app(create_custom_static_urls=False)
+app: FastAPI = create_app(create_custom_static_urls=True)
 # Добавляем middleware с безопасными заголовками
 app.add_middleware(BaseHTTPMiddleware, dispatch=add_security_headers)
 
