@@ -40,7 +40,6 @@ async def get_code_reference():
         raise HTTPException(
             status_code=status.HTTP_204_NO_CONTENT,
             detail="Not content",
-            headers={"response": "Not content"},
         )
 
     return {"total": len(result), "items": result}
@@ -84,7 +83,7 @@ async def get_exchange_rates_daly(
         if datetime.strptime(date, "%Y-%m-%d").date() > datetime.now(tz=tz).date():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="date > current date",
+                detail="Date error: date > current date.",
             )
 
     result = await exchange_rates_daly(date, currency_iso_code)
@@ -93,7 +92,6 @@ async def get_exchange_rates_daly(
         raise HTTPException(
             status_code=status.HTTP_204_NO_CONTENT,
             detail="Not content",
-            headers={"response": "Not content"},
         )
 
     return {"total": len(result), "items": result}
@@ -160,7 +158,7 @@ async def get_exchange_rates_dynamics(
         if datetime.strptime(date_from, "%Y-%m-%d").date() > datetime.now(tz=tz).date():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="date_from > current date",
+                detail="Date error: date_from > current date.",
             )
 
     if date_from and date_to:
@@ -170,7 +168,7 @@ async def get_exchange_rates_dynamics(
         ):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="date_from > date_to",
+                detail="Date error: date_from > date_to.",
             )
 
     result = await exchange_rates_dynamics(
@@ -183,7 +181,6 @@ async def get_exchange_rates_dynamics(
         raise HTTPException(
             status_code=status.HTTP_204_NO_CONTENT,
             detail="Not content",
-            headers={"response": "Not content"},
         )
 
     return {"total": len(result), "items": result}

@@ -17,7 +17,6 @@ version = f"{sys.version_info.major}.{sys.version_info.minor}"
 async def info():
     return {
         "name": "cb_rf_api",
-        "host": hostname,
-        "version": f"Hello world! From FastAPI running on Uvicorn. Using Python {version}",
-        "url": "http://localhost/openapi.json",
+        "version": "1.0.0",
+        "description": f"FastAPI app running on Uvicorn. Using Python {version}",
     }

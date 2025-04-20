@@ -1,0 +1,298 @@
+""" Repository file """
+
+import abc
+import logging
+from collections.abc import Sequence
+from datetime import datetime, date
+from typing import Generic, Type, TypeVar, List, Dict, Any
+
+from sqlalchemy import (
+    select,
+    insert,
+    update,
+    delete,
+    func,
+    or_,
+    and_,
+)
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from ..models.base import Base
+
+AbstractModel = TypeVar("AbstractModel")
+
+
+class AbstractRepository(Generic[AbstractModel]):
+    """Repository abstract class"""
+
+    @abc.abstractmethod
+    async def get(self, ident: int | str) -> AbstractModel:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def get_by_where(self, where_clause) -> AbstractModel | None:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def get_many(
+        self, where_clause, limit: int = 1000, order_by=None
+    ) -> Sequence[Base]:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def list(self, limit: int = None, order_by=None) -> Sequence[Base]:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def add(self, model: AbstractModel) -> None:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def insert(self, **kwargs) -> AbstractModel:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def update(self, where_clause, **kwargs) -> AbstractModel:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def delete(self, where_clause) -> None:
+        raise NotImplementedError
+
+
+class SQLAlchemyRepository(AbstractRepository):
+    """Repository abstract class"""
+
+    model: Type[Base]
+    session: AsyncSession
+
+    def __init__(self, orm_model: Type[Base], session: AsyncSession):
+        """
+        Initialize abstract repository class
+        :param orm_model: Which model will be used for operations
+        :param session: Session in which repository will work
+        """
+        self.model = orm_model
+        self.session = session
+
+    async def get(self, ident: int | str) -> AbstractModel:
+        """
+        Get an ONE model from the database with PK
+        :param ident: Key which need to find entry in database
+        :return:
+        """
+        return await self.session.get(entity=self.model, ident=ident)
+
+    async def get_by_where(self, where_clause) -> AbstractModel | None:
+        """
+        Get an ONE model from the database with where_clause
+        :param where_clause: Clause by which entry will be found
+        :return: Model if only one model was found, else None
+        """
+        statement = select(self.model).where(where_clause)
+        return (await self.session.execute(statement)).one_or_none()
+
+    async def get_many(
+        self, where_clause, limit: int = None, order_by=None
+    ) -> Sequence[Base]:
+        """
+        Get many models from the database with where_clause
+        :param where_clause: Where clause for finding models
+        :param limit: (Optional) Limit count of results
+        :param order_by: (Optional) Order by clause
+
+        Example:
+        >> Repository.get_many(Model.id == 1, limit=1000, order_by=Model.id)
+
+        :return: List of founded models
+        """
+        statement = select(self.model).where(where_clause)
+
+        if limit:
+            statement = statement.limit(limit)
+
+        if order_by:
+            statement = statement.order_by(order_by)
+
+        return (await self.session.scalars(statement)).all()
+
+    async def list(self, limit: int = None, order_by=None) -> Sequence[Base]:
+        """
+        Get many models from the database
+        Example:
+        >> Repository.get_many(Model.id == 1, limit=1000, order_by=Model.id)
+
+        :return: List of founded models
+        """
+        statement = select(self.model)
+
+        if limit:
+            statement = statement.limit(limit)
+
+        if order_by:
+            statement = statement.order_by(order_by)
+
+        return (await self.session.scalars(statement)).all()
+
+    async def add(self, model: AbstractModel) -> None:
+        """
+        Add a new model to the repository
+
+        :param model: The model to add
+        :return: Nothing
+        """
+        self.session.add(model)
+        await self.session.commit()
+
+    async def add_all(self, models: Sequence[AbstractModel]) -> int:
+        """
+        Add multiple models to the repository and return the count of added models.
+
+        :param models: A sequence of models to add
+        :return: The count of added models
+        """
+        try:
+            chunk_size = 20000
+            for i in range(0, len(models), chunk_size):
+                self.session.add_all(
+                    models[i : i + chunk_size]
+                )  # Добавляем сразу все модели
+                await self.session.commit()  # Фиксируем транзакцию
+            return len(models)  # Возвращаем количество добавленных моделей
+        except SQLAlchemyError as e:
+            await self.session.rollback()  # В случае ошибки откатываем транзакцию
+            raise e  # Пробрасываем исключение дальше для логирования или обработки
+
+    async def insert(self, **kwargs) -> AbstractModel:
+        """
+        Insert a new model into the database
+
+        :param kwargs: Keyword arguments representing the fields of the new model
+        :return: Nothing
+        """
+        statement = insert(self.model).values(**kwargs).returning(self.model)
+        result = await self.session.execute(statement)
+        await self.session.commit()
+        return result.scalar_one()
+
+    async def update(self, where_clause, **kwargs) -> AbstractModel:
+        """
+        Update a model in the database
+
+        :param where_clause: Clause by which entry will be found
+        :param kwargs: Keyword arguments representing the fields to update
+        :return: Nothing
+        """
+        statement = (
+            update(self.model)
+            .where(where_clause)
+            .values(**kwargs)
+            .returning(self.model)
+        )
+        result = await self.session.execute(statement)
+        await self.session.commit()
+        return result.scalar_one()
+
+    async def delete(self, where_clause) -> None:
+        """
+        Delete model from the database
+
+        :param where_clause: (Optional) Which statement
+        :return: Nothing
+        """
+        statement = delete(self.model).where(where_clause)
+        await self.session.execute(statement)
+        await self.session.commit()
+
+    async def delete_rows_from_table(
+        self, query_in_values: List[Dict[str, Any]] = None, **kwargs
+    ) -> int:
+        """
+        Асинхронная функция для удаления строк из таблицы в SQLAlchemy.
+
+        Args:
+            session (AsyncSession): Асинхронная сессия SQLAlchemy.
+            table: Таблица, в которой требуется выполнить удаление.
+            query_in_values (List[Dict[str, Any]], optional): Условия для объединения через OR, в формате [{"col1": value1, "col2": value2}, ...].
+            **kwargs: Условие для удаления строк (колонка=значение, >=значение и т.д.).
+
+        Returns:
+            int: Количество удаленных строк.
+        """
+        conditions = []
+
+        for key, value in kwargs.items():
+            if isinstance(value, str):
+                if value.startswith(">="):
+                    conditions.append(getattr(self.model, key) >= value[2:])
+                elif value.startswith("<="):
+                    conditions.append(getattr(self.model, key) <= value[2:])
+                elif value.startswith("!="):
+                    conditions.append(getattr(self.model, key) != value[2:])
+                elif value.startswith("in:"):
+                    # Поддержка условия IN
+                    in_values = list(map(str.strip, value[3:].split(",")))
+                    conditions.append(getattr(self.model, key).in_(in_values))
+                else:
+                    conditions.append(getattr(self.model, key) == value)
+            else:
+                conditions.append(getattr(self.model, key) == value)
+
+        or_conditions = []
+
+        # Обработка query_in_values для универсальных связок
+        if query_in_values:
+            for query in query_in_values:
+                if not isinstance(query, dict):
+                    raise ValueError(
+                        "Each element in 'query_in_values' must be a dictionary."
+                    )
+
+                # Создаем условие для каждой уникальной комбинации столбцов
+                query_conditions = []
+                for column, value in query.items():
+                    query_conditions.append(getattr(self.model, column) == value)
+
+                # Объединяем все условия внутри одного запроса через `AND`
+                or_conditions.append(and_(*query_conditions))
+
+            # Объединяем все условия для query_in_values через `OR`
+            conditions.append(or_(*or_conditions))
+
+        if not conditions:
+            logging.warning("No valid conditions provided for deletion.")
+            return 0
+
+        delete_stmt = delete(self.model).where(and_(*conditions))
+
+        try:
+            result = await self.session.execute(delete_stmt)
+            await self.session.commit()
+            # logging.info("%s deleted rows: %s", table.__tablename__, result.rowcount)
+            return result.rowcount
+        except Exception as e:
+            logging.error(f"Error during deletion: {e}", exc_info=True)
+            await self.session.rollback()
+            return 0
+
+    async def last_change_date(self, store_id: int) -> datetime | None:
+        """
+        Get last change date
+        :param store_id:
+        """
+        return await self.session.scalar(
+            select(self.model.date_last_change)
+            .where(self.model.store_id == store_id)
+            .order_by(self.model.date_last_change.desc())
+            .limit(1)
+        )
+
+    async def max_date(self, store_id: int) -> date | None:
+        """
+        Get last date
+        :param store_id:
+        """
+        return await self.session.scalar(
+            select(func.max(self.model.date)).where(self.model.store_id == store_id)
+        )

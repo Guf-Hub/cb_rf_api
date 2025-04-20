@@ -36,8 +36,8 @@ class AuthConfig(DefaultConfig):
 
 class UvicornConfig(DefaultConfig):
     APP: str = "main:app"
-    HOST: str = "0.0.0.0"
-    PORT: int = 80  # 8000
+    HOST: str = "localhost"  # "0.0.0.0"
+    PORT: int = 8000  # 8000
     RELOAD: bool = False
     LOG_LEVEL: str = "info"
     WORKERS: int = 1
@@ -111,10 +111,10 @@ class DBSettings(DefaultConfig):
 
 
 class Settings(BaseSettings):
-    dev: bool = False
+    dev: bool = True
     api: bool = False
     use_sqlite: bool = True
-    api_v1_prefix: str = "/api/v1"
+    api_v1_prefix: str = "/cb_rf/api/v1"
     auth: AuthConfig = AuthConfig()
     db: DBSettings = DBSettings()
     uvicorn: UvicornConfig = UvicornConfig()

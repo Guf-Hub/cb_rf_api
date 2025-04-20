@@ -27,7 +27,7 @@ tags_metadata = [
 
 
 def register_static_docs_routes(app: FastAPI):
-    @app.get("/docs", include_in_schema=False)
+    @app.get("/cb_rf/docs", include_in_schema=False)
     async def custom_swagger_ui_html():
         return get_swagger_ui_html(
             openapi_url=app.openapi_url,
@@ -41,7 +41,7 @@ def register_static_docs_routes(app: FastAPI):
     async def swagger_ui_redirect():
         return get_swagger_ui_oauth2_redirect_html()
 
-    @app.get("/redoc", include_in_schema=False)
+    @app.get("/cb_rf/redoc", include_in_schema=False)
     async def redoc_html():
         return get_redoc_html(
             openapi_url=app.openapi_url,
@@ -66,8 +66,9 @@ def create_app(create_custom_static_urls: bool = False) -> FastAPI:
             "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
         },
         openapi_tags=tags_metadata,
-        docs_url=None if create_custom_static_urls else "/",  # "/docs",
+        docs_url=None if create_custom_static_urls else "/cb_rf/",  # "/docs",
         # redoc_url=None if create_custom_static_urls else "/",  # "/redoc",
+        openapi_url="/cb_rf/openapi.json",  # Установите openapi_url на нужный маршрут
     )
 
     if create_custom_static_urls:

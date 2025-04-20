@@ -17,6 +17,91 @@ dpkg -l | grep postgresql
 
 ```
 
+# Nginx
+
+https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-ubuntu-20-04
+https://timeweb.cloud/tutorials/ubuntu/kak-ustanovit-nginx-na-ubuntu
+
+```bash
+sudo apt update
+sudo apt install nginx
+sudo systemctl enable nginx
+sudo service nginx status
+sudo systemctl is-enabled nginx
+```
+Запуск
+
+```bash
+  sudo systemctl start nginx
+```
+Отключение
+
+```bash
+sudo systemctl stop nginx
+```
+Перезапуск
+
+```bash
+sudo systemctl restart nginx
+```
+Перезагрузка
+
+```bash
+sudo systemctl reload nginx
+```
+Проверка состояния службы
+
+```bash
+sudo systemctl status nginx
+```
+Тестирование конфигурации
+
+```bash
+sudo nginx -t
+```
+
+# Firewall
+
+https://selectel.ru/blog/tutorials/how-to-configure-firewall-with-ufw-on-ubuntu-20/
+
+```bash
+sudo apt install ufw
+```
+```bash
+sudo nano /etc/ufw/applications.d/nginx.ini
+```
+
+```ini
+[Nginx HTTP]
+title=Web Server
+description=Enable NGINX HTTP traffic
+ports=80/tcp
+
+[Nginx HTTPS] \
+title=Web Server (HTTPS) \
+description=Enable NGINX HTTPS traffic
+ports=443/tcp
+
+[Nginx Full]
+title=Web Server (HTTP,HTTPS)
+description=Enable NGINX HTTP and HTTPS traffic
+ports=80,443/tcp
+```
+
+```bash
+sudo ufw app list
+```
+
+```bash
+sudo ufw allow 'Nginx Full'
+sudo ufw allow 'OpenSSH'
+sudo ufw enable
+```
+
+```bash
+sudo ufw status
+```
+
 # Docker
 
 https://github.com/luchanos/luchanos_oxford_university

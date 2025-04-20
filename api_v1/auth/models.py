@@ -1,4 +1,5 @@
-from models.base import Model, EmailStr
+from pydantic import EmailStr
+from models.base import Model
 
 
 class TokenModel(Model):

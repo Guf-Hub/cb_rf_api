@@ -28,12 +28,19 @@ app.add_middleware(BaseHTTPMiddleware, dispatch=add_security_headers)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        "http://localhost",  # Локальная разработка (если требуется)
+        "http://127.0.0.1",
+        "https://85.172.76.175",
+        "https://85.172.111.36",
+        "http://195.42.175",
+    ],  # Укажите, какие домены могут делать запросы (безопаснее указать конкретные)
+    # allow_origin_regex="http://195.42.175:[0-9]+", # Регулярное выражение для разрешения конкретных доменов
+    allow_credentials=True,
+    allow_methods=[
         "GET",
         "POST",
         # "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS",
-    ],  # Укажите, какие домены могут делать запросы (безопаснее указать конкретные)
-    allow_credentials=True,
-    allow_methods=["*"],
+    ],
     allow_headers=["*"],
 )
 
