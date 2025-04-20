@@ -114,7 +114,7 @@ class Settings(BaseSettings):
     dev: bool = True
     api: bool = False
     use_sqlite: bool = True
-    api_v1_prefix: str = "cb_rf/api/v1"
+    api_v1_prefix: str = "/cb_rf/api/v1"
     auth: AuthConfig = AuthConfig()
     db: DBSettings = DBSettings()
     uvicorn: UvicornConfig = UvicornConfig()
